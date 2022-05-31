@@ -105,7 +105,7 @@ class I18n_Rewrite_Rules {
 			return $url;
 		}
 
-		// Нужно, чтобы URL изменялся после основного запроса, потому что
+		// Нужно, чтобы URL изменялся только после основного запроса, потому что
 		// в нем эта функция должна вернуть результат без изменений...
 		// справедливо только для фронта.
 		// см https://wp-kama.ru/function/WP::parse_request
@@ -113,10 +113,17 @@ class I18n_Rewrite_Rules {
 			return $url;
 		}
 
-		$trace = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS, 5 ); // fast
+		$trace = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS, 6 ); // fast - 0.025sec for 50k iterations
 
-		// Don't add LANG prefix if home_url() called from rest_url()
-		if( 'get_rest_url' === $trace[4]['function'] ){
+		// Don't add LANG prefix if home_url() called from:
+		if(
+			// rest_url()
+			'get_rest_url' === $trace[4]['function']
+			||
+			// WP_Rewrite::rewrite_rules()
+			// robots.txt removed from revrite rules
+			'rewrite_rules' === $trace[5]['function']
+		){
 			return $url;
 		}
 
@@ -220,8 +227,7 @@ class I18n_Rewrite_Rules {
 
 			// skip prefix
 			if(
-				preg_match( '~^robots~', $rule ) ||
-				preg_match( '~^favicon~', $rule ) ||
+				preg_match( '~^(robots|favicon)~', $rule ) ||
 				preg_match( '~^\^~', $rule )
 			){
 				$new_rules[ $rule ] = $query;
