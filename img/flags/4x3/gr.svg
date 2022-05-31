@@ -1,1 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" height="480" width="640" viewBox="0 0 640 480"><defs><clipPath id="a"><path fill-opacity=".67" d="M0 0h120v90h-120z"/></clipPath></defs><g fill-rule="evenodd" clip-path="url(#a)"><path fill="#0d5eaf" d="M0 0h719.55v53.3h-719.55z"/><path fill="#fff" d="M0 53.3h719.55v53.3h-719.55z"/><path fill="#0d5eaf" d="M0 106.6h719.55v53.3h-719.55z"/><path fill="#fff" d="M0 159.9h719.55v53.3h-719.55z"/><path fill="#0d5eaf" d="M0 213.2h719.55v53.3h-719.55z"/><path fill="#fff" d="M0 266.5h719.55v53.3h-719.55z"/><path fill="#0d5eaf" d="M0 319.8h719.55v53.3h-719.55z"/><path fill="#fff" d="M0 373.1h719.55v53.3h-719.55z"/><path fill="#0d5eaf" d="M0 426.4h719.55v53.3h-719.55zm0-426.4h266.5v266.5h-266.5z"/><g fill="#fff"><path d="M106.6 0h53.3v266.5h-53.3zM0 106.6h266.5v53.3h-266.5z"/></g></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" id="flag-icon-css-gr" width="640" height="480">
+  <defs>
+    <clipPath id="a">
+      <path fill-opacity=".7" d="M0 0h120v90H0z"/>
+    </clipPath>
+  </defs>
+  <g fill-rule="evenodd" stroke-width="1pt" clip-path="url(#a)" transform="scale(5.33)">
+    <path fill="#0d5eaf" d="M0 0h135v10H0z"/>
+    <path fill="#fff" d="M0 10h135v10H0z"/>
+    <path fill="#0d5eaf" d="M0 20h135v10H0z"/>
+    <path fill="#fff" d="M0 30h135v10H0z"/>
+    <path fill="#0d5eaf" d="M0 40h135v10H0z"/>
+    <path fill="#fff" d="M0 50h135v10H0z"/>
+    <path fill="#0d5eaf" d="M0 60h135v10H0z"/>
+    <path fill="#fff" d="M0 70h135v10H0z"/>
+    <path fill="#0d5eaf" d="M0 80h135v10H0zM0 0h50v50H0z"/>
+    <g fill="#fff">
+      <path d="M20 0h10v50H20z"/>
+      <path d="M0 20h50v10H0z"/>
+    </g>
+  </g>
+</svg>

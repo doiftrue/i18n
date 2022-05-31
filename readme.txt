@@ -16,12 +16,20 @@ Adds `/ru`, `/en` ... prefix to URL. Save current lang to cookies.
 
 == Installation ==
 
+
 == Frequently Asked Questions ==
+
 
 == Screenshots ==
 
 
 == Changelog ==
+
+### 1.2.0
+- Refactor improvements.
+
+### 1.1.2
+- Improve for `_get_meta_i18n()`.
 
 ### 1.0.1
 - NEW: Дополнительный пример в `example_hooks.php`.
