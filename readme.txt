@@ -45,6 +45,11 @@ require_once __DIR__ . '/i18n/i18n.php';
 
 == Changelog ==
 
+### 1.2.1
+- Ability to set options via hook `i18n__options` before plugin init.
+- new option `process_home_url`.
+- Some Refactor.
+
 ### 1.2.0
 - Refactor improvements.
 
