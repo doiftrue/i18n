@@ -14,11 +14,11 @@
  */
 function langs_data( $type = false ){
 
-	if( $type === 'codes' || $type === 'ids' ){
-		return Langs::$active_langs;
-	}
+	$langs = Langs::$langs_data;
 
-	$langs = array_intersect_key( Langs::$langs_data, array_flip( Langs::$active_langs ) );
+	if( $type === 'codes' || $type === 'ids' ){
+		return array_keys( $langs );
+	}
 
 	if( $type === 'names' ){
 		return wp_list_pluck( $langs, 'lang_name' );
@@ -52,7 +52,7 @@ function current_lang(){
  * @return string Passed lang if it exists in the list of current languages. $default otherwise.
  */
 function sanitize_lang( $lang, $default = '' ){
-	return Langs::active_langs_contains( $lang ) ? $lang : $default;
+	return Langs::is_lang_active( $lang ) ? $lang : $default;
 }
 
 /**
@@ -62,7 +62,7 @@ function sanitize_lang( $lang, $default = '' ){
  * @return bool
  */
 function is_current_lang_default(){
-	return Langs::$lang === Langs::$default_lang;
+	return Langs::$lang === i18n_opt()->default_lang;
 }
 
 ## Получает URL флага по коду страниы
@@ -74,15 +74,17 @@ function flag_url_by_country_code( $country_code ){
 
 ## заменяет префикс языка на указанный в переданном URL
 function uri_replace_lang_prefix( $url, $new_lang = '' ){
-	if( ! $new_lang )
-		$new_lang = current_lang();
 
-	return preg_replace( '~^(https?://[^/]+)?('. Langs::$URI_prefix .'/)(?:'. Langs::$langs_regex .')(?=/)~', "\\1\\2$new_lang", $url, 1 );
+	if( ! $new_lang ){
+		$new_lang = current_lang();
+	}
+
+	return preg_replace( '~^(https?://[^/]+)?('. i18n_opt()->URI_prefix .'/)(?:'. Langs::$langs_regex .')(?=/)~', "\\1\\2$new_lang", $url, 1 );
 }
 
 ## удаляет префикс языка из переданного URL
 function uri_delete_lang_prefix( $url ){
-	$url = preg_replace( '~^(https?://[^/]+)?('. Langs::$URI_prefix .'/)(?:'. Langs::$langs_regex .')(?=/)~', '\1\2', $url, 1 );
+	$url = preg_replace( '~^(https?://[^/]+)?('. i18n_opt()->URI_prefix .'/)(?:'. Langs::$langs_regex .')(?=/)~', '\1\2', $url, 1 );
 	return preg_replace( '~(?<!:)/+~', '/', $url ); // //bar >>> /bar
 }
 
@@ -142,7 +144,7 @@ function _get_meta_i18n( $meta_func, $id, $meta_key, $single ){
 		return $meta;
 
 	// fallback
-	$meta = $meta_func( $id, "{$meta_key}_". Langs::$default_lang, $single );
+	$meta = $meta_func( $id, "{$meta_key}_". i18n_opt()->default_lang, $single );
 	if( $meta !== '' )
 		return $meta;
 

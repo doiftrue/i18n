@@ -1,8 +1,7 @@
 === Meta Box ===
 Stable tag:        trunk
-Tested up to:      5.2.3
+Tested up to:      6.0
 Contributors:      Kama
-Requires at least: 4.7
 License:           GPLv2
 Tags: multilang
 

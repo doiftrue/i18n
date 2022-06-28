@@ -1,39 +1,10 @@
 <?php
 
-// require_once __DIR__ . '/_debug.php';
-
-/**
- * @return I18n_Rewrite_Rules
- */
-function I18n_Rules(){
-	return I18n_Rewrite_Rules::instance();
-}
-
 class I18n_Rewrite_Rules {
 
-	/**
-	 * Class options.
-	 *
-	 * @var object|mixed|void
-	 */
-	public array $opts;
+	private function __construct(){}
 
-	public static function instance(){
-		static $inst;
-		$inst || $inst = new self();
-		return $inst;
-	}
-
-	private function __construct() {
-
-		$this->opts = apply_filters( 'i18n__options', [
-			// (bool) Нужно ли использовать префикс языка для главной home_url().
-			'process_home_url' => true,
-		] );
-
-	}
-
-	static function early_init(){
+	public static function early_init(): void {
 
 		add_filter( 'rewrite_rules_array', [ __CLASS__, 'global_rules_correction' ], PHP_INT_MAX );
 
@@ -41,7 +12,7 @@ class I18n_Rewrite_Rules {
 		add_filter( 'pre_post_link', [ __CLASS__, 'add_lang_prefix_tag' ], 10, 3 );
 	}
 
-	static function init(){
+	public static function init(): void {
 
 		$hook_name = is_admin() ? 'setup_theme' : 'wp' /*'do_parse_request'*/;
 		add_filter( $hook_name, [ __CLASS__, 'do_parse_request' ], 0 );
@@ -75,7 +46,7 @@ class I18n_Rewrite_Rules {
 			add_filter( $filter_name, [ __CLASS__, 'replacere_lang_tag_permalink' ], 11, 3 );
 		}
 
-		if( I18n_Rules()->opts['process_home_url'] ){
+		if( i18n_opt()->process_home_url ){
 			add_filter( 'home_url',         [ __CLASS__, 'fix_home_url' ], 10, 2 );
 			add_filter( 'network_home_url', [ __CLASS__, 'fix_home_url' ], 10, 2 );
 		}
@@ -124,7 +95,7 @@ class I18n_Rewrite_Rules {
 		}
 
 		// в $path указан язык - ничего не делаем...
-		if( $path && preg_match( '~^' . Langs::$URI_prefix . '/?(?:' . Langs::$langs_regex . ')/~', $path ) ){
+		if( $path && preg_match( '~^' . i18n_opt()->URI_prefix . '/?(?:' . Langs::$langs_regex . ')/~', $path ) ){
 			return $url;
 		}
 
@@ -141,7 +112,7 @@ class I18n_Rewrite_Rules {
 		// указан путь, но нет языка в нем...
 		if( $path ){
 			return preg_replace(
-				'~(https?://[^/]+)(' . Langs::$URI_prefix . '/)(?!(' . Langs::$langs_regex . ')/)~',
+				'~(https?://[^/]+)(' . i18n_opt()->URI_prefix . '/)(?!(' . Langs::$langs_regex . ')/)~',
 				'\1\2' . Langs::$lang . '/',
 				$url
 			);
@@ -165,7 +136,7 @@ class I18n_Rewrite_Rules {
 		return str_replace( '%lang%', $lang, $permalink );
 	}
 
-	static function do_parse_request( $cur ){
+	public static function do_parse_request( $cur ){
 
 		self::get_page_permastruct();
 		self::get_author_permastruct();
@@ -194,19 +165,21 @@ class I18n_Rewrite_Rules {
 		return $wp_rewrite->author_structure = self::add_lang_prefix_tag( $wp_rewrite->front . $wp_rewrite->author_base . '/%author%');
 	}
 
-	protected static function correct_extras(){
+	protected static function correct_extras(): void {
 		global $wp_rewrite;
 
-		foreach( $wp_rewrite->extra_permastructs as $k => & $val ){
+		foreach( $wp_rewrite->extra_permastructs as & $val ){
 			$val['struct'] = self::add_lang_prefix_tag( $val['struct'] );
 		}
+		unset( $val );
 	}
 
-	static function add_lang_prefix_tag( $struct ){
-		$struct = ltrim( $struct, '/' );
-		$struct = preg_replace('~^%lang%/?~', '', $struct );
+	public static function add_lang_prefix_tag( $struct ): string {
 
-		return '/%lang%/'. $struct;
+		$struct = ltrim( $struct, '/' );
+		$struct = preg_replace( '~^%lang%/?~', '', $struct );
+
+		return "/%lang%/$struct";
 	}
 
 	/**
@@ -216,7 +189,7 @@ class I18n_Rewrite_Rules {
 	 *
 	 * @return array|string[]
 	 */
-	static function global_rules_correction( $rules ){
+	public static function global_rules_correction( $rules ): array {
 
 		$new_rules = [];
 
@@ -234,7 +207,7 @@ class I18n_Rewrite_Rules {
 			}
 
 			// add prefix
-			$query = preg_replace_callback( '~matches\[([0-9]+)\]~', function( $mm ) {
+			$query = preg_replace_callback( '~matches\[(\d+)\]~', static function( $mm ) {
 				return 'matches[' . ( (int) $mm[1] + 1 ) . ']';
 			}, $query );
 
@@ -242,7 +215,7 @@ class I18n_Rewrite_Rules {
 		}
 
 		// home
-		if( I18n_Rules()->opts['process_home_url'] ){
+		if( i18n_opt()->process_home_url ){
 			//$new_rules = [ '^(' . Langs::$langs_regex . ')/?$' => 'index.php?lang=$matches[1]' ] + $new_rules;
 			$new_rules = [ '^(' . Langs::$langs_regex . ')/?$' => 'index.php' ] + $new_rules;
 		}

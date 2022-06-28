@@ -3,28 +3,29 @@
 /**
  * @return Langs
  */
-function Langs(){
+function Langs(): Langs {
 	return Langs::instance();
 }
 
 class Langs {
 
-	// use lang if it's not set
-	public static string $default_lang = 'ru';
+	/**
+	 * All active  langs data.
+	 * @var array[]
+	 */
+	public static $langs_data;
 
-	public static array $active_langs = [ 'ru' ];
+	/**
+	 * Regular for ru|en, to simplify.
+	 * @var string
+	 */
+	public static $langs_regex = '';
 
-	// данные всех языков
-	public static array $langs_data;
-
-	// регулярка для ru|en, для упрощения...
-	public static string $langs_regex = '';
-
-	// текущий язык ru или en - по умолчанию пустая строка - не определен
-	public static string $lang  = '';
-
-	// поддиректория в которой расположен сайт: `//site.ru/asia/` > `/asia`
-	public static string $URI_prefix = '';
+	/**
+	 * Current language ru|en|... Default is empty string - not defined.
+	 * @var string
+	 */
+	public static $lang = '';
 
 	/**
 	 * @return self
@@ -32,35 +33,37 @@ class Langs {
 	public static function instance(): self {
 		static $instance;
 		$instance || $instance = new self();
+
 		return $instance;
 	}
 
 	private function __construct(){
 
+		// init options
+		i18n_opt();
+
 		// set $langs_data
-		self::$langs_data = require __DIR__ . '/langs-data.php';
+		$langs_data = require __DIR__ . '/langs-data.php';
 
 		// добавим flag_path для всех активных языков
-		foreach( self::$active_langs as $lang ){
-			self::$langs_data[ $lang ]['flag_path'] = str_replace( I18N_URL, I18N_PATH, self::$langs_data[ $lang ]['flag'] );
+		foreach( i18n_opt()->active_langs as $lang ){
+			self::$langs_data[ $lang ] = $langs_data[ $lang ];
+			self::$langs_data[ $lang ]['flag_path'] = str_replace( I18N_URL, I18N_PATH, $langs_data[ $lang ]['flag'] );
 		}
 
 	}
 
 	public function init(): void {
 
-		self::$URI_prefix = untrailingslashit( parse_url( get_option('home'), PHP_URL_PATH ) );
-
 		// раньше всех
-		self::$langs_regex = implode( '|', self::$active_langs );
+		self::$langs_regex = implode( '|', array_keys( self::$langs_data ) );
 
-		// Устанавливает текущий язык: self::$lang, локаль и куки.
+		// Set current lang self::$lang, locale and cookies.
 		self::set_lang();
 
 		// после установки локали...
 		//load_muplugin_textdomain( 'i18n', plugin_basename(I18N_PATH) .'/lang' );
 
-		I18n_Rewrite_Rules::instance();
 		I18n_Rewrite_Rules::early_init();
 
 		add_action( 'init', [ 'I18n_Rewrite_Rules', 'init' ], 0 );
@@ -76,7 +79,7 @@ class Langs {
 		// установим self::$lang
 		if(
 			// определяем по URL
-			preg_match( '~^'. self::$URI_prefix .'/('. self::$langs_regex .')(/|$)~', $_SERVER['REQUEST_URI'], $mm ) &&
+			preg_match( '~^'. i18n_opt()->URI_prefix .'/('. self::$langs_regex .')(/|$)~', $_SERVER['REQUEST_URI'], $mm ) &&
 			// пропускаем странные URL: на css, js, php, с запросами, от wp и т.д.
 			! preg_match( '~[.]|wp-~', $_SERVER['REQUEST_URI'] ) // ?= юзать нельзя - это параметры запроса
 		){
@@ -104,14 +107,14 @@ class Langs {
 			self::$lang = $_COOKIE['lang'];
 		}
 
-		if( ! self::$lang || ! self::active_langs_contains() ){
-			self::$lang = self::$default_lang;
+		if( ! self::$lang || ! self::is_lang_active( self::$lang ) ){
+			self::$lang = i18n_opt()->default_lang;
 		}
 
 		// локаль, для фронта и аякс
 		if( ! is_admin() || wp_doing_ajax() ){
 
-			$lang_locale = self::active_langs_contains() ? self::$langs_data[ self::$lang ]['locale'] : '';
+			$lang_locale = self::is_lang_active( self::$lang ) ? self::$langs_data[ self::$lang ]['locale'] : '';
 
 			if( $lang_locale && $lang_locale !== get_locale() ){
 
@@ -124,7 +127,7 @@ class Langs {
 		// кука языка
 		if( ! is_admin() && ! wp_doing_ajax() ){
 
-			if( I18N_MUPLUG_INSTALL ){
+			if( I18N_IS_MUPLUG_INSTALL ){
 				// на момент хука 'muplugins_loaded' константы куков пр. COOKIE_DOMAIN еще не определены.
 				add_action( 'plugins_loaded', [ __CLASS__, 'set_cookie' ]);
 
@@ -140,14 +143,15 @@ class Langs {
 	}
 
 	/**
-	 * Checks if specified lang is one of active langs.
+	 * Checks if specified lang is one of the active langs.
 	 *
 	 * @param string $lang Lang to check or current self::$lang.
 	 *
 	 * @return bool
 	 */
-	public static function active_langs_contains( $lang = '' ){
-		return in_array( $lang ?: self::$lang, self::$active_langs, true );
+	public static function is_lang_active( $lang = '' ){
+
+		return isset( self::$langs_data[ $lang ?: self::$lang ] );
 	}
 
 	# устанавливает куку языка
@@ -182,8 +186,8 @@ class Langs {
 		$URI = $_SERVER['REQUEST_URI'];
 
 		// Удалим префикc, если надо. Чтобы удобно было проверять
-		if( self::$URI_prefix ){
-			$URI = substr( $URI, strlen( self::$URI_prefix ) );
+		if( i18n_opt()->URI_prefix ){
+			$URI = substr( $URI, strlen( i18n_opt()->URI_prefix ) );
 		}
 
 		/**
@@ -199,7 +203,7 @@ class Langs {
 		$URI_parts = wp_parse_url( $URI );
 
 		// do nothing for home (if it needs)
-		if( ! I18n_Rules()->opts['process_home_url']
+		if( ! i18n_opt()->process_home_url
 		    &&
 		    (
 		        '/' === $URI_parts['path']
@@ -227,7 +231,7 @@ class Langs {
 		}
 
 		// перенаправим на дефолтный или ткущий язык
-		$new_url = home_url( ( self::$lang ?: self::$default_lang ) . $URI );
+		$new_url = home_url( ( self::$lang ?: i18n_opt()->default_lang ) . $URI );
 		wp_safe_redirect( $new_url, 301 );
 		exit;
 

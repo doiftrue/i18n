@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * All available langs data.
+ * It's NOT active langs.
+ */
+
 return [
 
 	'ru' => [
