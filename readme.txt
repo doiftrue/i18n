@@ -13,6 +13,27 @@ Script for Multi-language site.
 Adds `/ru`, `/en` ... prefix to URL. Save current lang to cookies.
 
 
+### Usage
+
+Install this code as MU-Plugin. And init the plugin like this:
+
+```
+add_filter( 'i18n__options', function( $opts ){
+
+	$opts = array_merge( $opts, [
+		'default_lang' => 'ru',
+		'active_langs' => [ 'ru' ],
+		'process_home_url' => false,
+	] );
+
+	return $opts;
+} );
+
+require_once __DIR__ . '/i18n/i18n.php';
+```
+
+
+
 == Installation ==
 
 
