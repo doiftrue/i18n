@@ -9,10 +9,8 @@
  *
  * Author:      Kama
  * Author URI:  https://wp-kama.ru/
- * Version:     1.2.3
+ * Version:     1.2.4
  */
-
-// TODO добавить и проверять на автомате исключение в ЧПУ или htaccess для hybridauth - RewriteRule ^(content/.*/hybridauth/.*) $1 [L]
 
 define( 'I18N_PATH', wp_normalize_path( plugin_dir_path( __FILE__ ) ) );
 define( 'I18N_URL',  plugin_dir_url( __FILE__ ) );

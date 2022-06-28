@@ -67,9 +67,11 @@ function is_current_lang_default(){
 
 ## Получает URL флага по коду страниы
 function flag_url_by_country_code( $country_code ){
-	if( $country_code === 'en' )    $country_code = 'us';
-	if( $country_code === 'pt-br' ) $country_code = 'br';
-	return I18N_URL . "img/flags/4x3/". strtolower($country_code) .".svg";
+
+	'en' === $country_code && $country_code = 'us';
+	'pt-br' === $country_code && $country_code = 'br';
+
+	return I18N_URL . "img/flags/4x3/". strtolower( $country_code ) .".svg";
 }
 
 ## заменяет префикс языка на указанный в переданном URL
@@ -79,13 +81,27 @@ function uri_replace_lang_prefix( $url, $new_lang = '' ){
 		$new_lang = current_lang();
 	}
 
-	return preg_replace( '~^(https?://[^/]+)?('. i18n_opt()->URI_prefix .'/)(?:'. Langs()->langs_regex .')(?=/)~', "\\1\\2$new_lang", $url, 1 );
+	return preg_replace(
+		'~^(https?://[^/]+)?('. i18n_opt()->URI_prefix .'/)(?:'. Langs()->langs_regex .')(?=/)~',
+		"\\1\\2$new_lang", $url, 1
+	);
 }
 
-## удаляет префикс языка из переданного URL
+/**
+ * Удаляет префикс языка из переданного URL.
+ *
+ * @param string $url
+ *
+ * @return string
+ */
 function uri_delete_lang_prefix( $url ){
-	$url = preg_replace( '~^(https?://[^/]+)?('. i18n_opt()->URI_prefix .'/)(?:'. Langs()->langs_regex .')(?=/)~', '\1\2', $url, 1 );
-	return preg_replace( '~(?<!:)/+~', '/', $url ); // //bar >>> /bar
+
+	$url = preg_replace(
+		'~^(https?://[^/]+)?('. i18n_opt()->URI_prefix .'/)(?:'. Langs()->langs_regex .')(?=/)~',
+		'\1\2', $url, 1
+	);
+
+	return preg_replace( '~(?<!:)/+~', '/', $url ); // //foo >>> /foo
 }
 
 
@@ -140,13 +156,15 @@ function get_post_title_i18n( $post ){
 function _get_meta_i18n( $meta_func, $id, $meta_key, $single ){
 
 	$meta = $meta_func( $id, "{$meta_key}_" . current_lang(), $single );
-	if( $meta !== '' )
+	if( $meta !== '' ){
 		return $meta;
+	}
 
 	// fallback
-	$meta = $meta_func( $id, "{$meta_key}_". i18n_opt()->default_lang, $single );
-	if( $meta !== '' )
+	$meta = $meta_func( $id, "{$meta_key}_" . i18n_opt()->default_lang, $single );
+	if( $meta !== '' ){
 		return $meta;
+	}
 
 	return $meta_func( $id, $meta_key, $single );
 }
@@ -160,97 +178,28 @@ function _get_meta_i18n( $meta_func, $id, $meta_key, $single ){
  *
  * @return mixed|string
  */
-function _get_post_field_i18n( $post, $field = 'content' ){
+function _get_post_field_i18n( $post, $field = 'content' ) {
+
 	$post = get_post( $post );
 
-	if( ! $post ) return '';
+	if( ! $post ){
+		return '';
+	}
 
 	$value = $post->{"post_$field"};
 
-	if( is_current_lang_default() && $value )
+	if( $value && is_current_lang_default() ){
 		return $value;
+	}
 
-	if( $meta_value = get_post_meta_i18n( $post->ID, $field ) )
+	$meta_value = get_post_meta_i18n( $post->ID, $field );
+
+	if( $meta_value ){
 		$value = $meta_value;
+	}
 
 	return $value;
 }
 
 
 
-
-/**
- * Replase current MO data with specified one by locale.
- *
- * @param string $set_locale `en_US`, `ru_RU`, or simple `ru`, `en`.
- * @param string $domain
- *
- * @return bool
- */
-function hb_switch_locale( $set_locale, $domain = 'hb' ){
-	global $l10n, $locale, $hb_MOs, $hb_switched_locale;
-
-	$langs_data = langs_data();
-
-	// aliases: ru >>> ru_RU
-	if( isset( $langs_data[ $set_locale ] ) ){
-		$set_locale = $langs_data[ $set_locale ]['locale'];
-	}
-
-	// save original
-	if( ! isset( $hb_MOs[ $locale ] ) ){
-		$hb_MOs[ $locale ] = $l10n[ $domain ];
-	}
-
-	// exclusion for hard coded locale
-	if( 'en_US' === $set_locale ){
-		$hb_switched_locale = $locale;
-		$l10n[ $domain ] = null;
-		return true;
-	}
-
-	if( isset( $hb_MOs[ $set_locale ] ) ){
-		$mo = $hb_MOs[ $set_locale ];
-	}
-	else{
-		$mofile = __DIR__ . "/lang/hb-$set_locale.mo";
-
-		if( ! is_readable( $mofile ) ){
-			return false;
-		}
-
-		$mo = new MO();
-		if( ! $mo->import_from_file( $mofile ) ){
-			return false;
-		}
-
-		$hb_MOs[ $set_locale ] = $mo;
-	}
-
-	// set switched + save
-	$hb_switched_locale = $locale;
-
-	$l10n[ $domain ] = $mo;
-
-	return true;
-}
-
-/**
- * Restore switched by hb_switch_locale() function MO data.
- *
- * @param string $domain
- *
- * @return bool
- */
-function hb_restore_locale( $domain = 'hb' ){
-	global $l10n, $hb_MOs, $hb_switched_locale;
-
-	if( ! empty($hb_switched_locale) ){
-		$l10n[ $domain ] = $hb_MOs[ $hb_switched_locale ];
-		$hb_switched_locale = null;
-
-		return true;
-	}
-
-	return false;
-}

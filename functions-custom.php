@@ -1,7 +1,84 @@
 <?php
 
+/**
+ * Replase current MO data with specified one by locale.
+ *
+ * @param string $set_locale `en_US`, `ru_RU`, or simple `ru`, `en`.
+ * @param string $domain
+ *
+ * @return bool
+ */
+function hb_switch_locale( $set_locale, $domain = 'hb' ){
+	global $l10n, $locale, $hb_MOs, $hb_switched_locale;
+
+	$langs_data = langs_data();
+
+	// aliases: ru >>> ru_RU
+	if( isset( $langs_data[ $set_locale ] ) ){
+		$set_locale = $langs_data[ $set_locale ]['locale'];
+	}
+
+	// save original
+	if( ! isset( $hb_MOs[ $locale ] ) ){
+		$hb_MOs[ $locale ] = $l10n[ $domain ];
+	}
+
+	// exclusion for hard coded locale
+	if( 'en_US' === $set_locale ){
+		$hb_switched_locale = $locale;
+		$l10n[ $domain ] = null;
+		return true;
+	}
+
+	if( isset( $hb_MOs[ $set_locale ] ) ){
+		$mo = $hb_MOs[ $set_locale ];
+	}
+	else{
+		$mofile = __DIR__ . "/lang/hb-$set_locale.mo";
+
+		if( ! is_readable( $mofile ) ){
+			return false;
+		}
+
+		$mo = new MO();
+		if( ! $mo->import_from_file( $mofile ) ){
+			return false;
+		}
+
+		$hb_MOs[ $set_locale ] = $mo;
+	}
+
+	// set switched + save
+	$hb_switched_locale = $locale;
+
+	$l10n[ $domain ] = $mo;
+
+	return true;
+}
+
+/**
+ * Restore switched by hb_switch_locale() function MO data.
+ *
+ * @param string $domain
+ *
+ * @return bool
+ */
+function hb_restore_locale( $domain = 'hb' ){
+	global $l10n, $hb_MOs, $hb_switched_locale;
+
+	if( ! empty($hb_switched_locale) ){
+		$l10n[ $domain ] = $hb_MOs[ $hb_switched_locale ];
+		$hb_switched_locale = null;
+
+		return true;
+	}
+
+	return false;
+}
+
 ## получает URL флага по ID страниы
 function flag_url_by_country_id( $country_id ){
+
 	/* $data = array(
 		1   => 'ru',
 		2   => 'ua',
@@ -35,14 +112,16 @@ function flag_url_by_country_id( $country_id ){
 
 	$country_id = (int) $country_id;
 	if( isset( $data[ $country_id ] ) )
-		return I18N_URL . "img/flags/4x3/{$data[$country_id]}.svg"; */
+		return I18N_URL . "img/flags/4x3/{$data[$country_id]}.svg";
+	 */
 
 	$country_id = (int) $country_id;
 
-	$code = wp_list_filter(get_countries(), ['vk_id'=> $country_id]);
+	$code = wp_list_filter( get_countries(), [ 'vk_id' => $country_id ] );
 
-	if( isset( $code ) )
-		return I18N_URL . "img/flags/4x3/" . key($code) . ".svg";
+	if( isset( $code ) ){
+		return I18N_URL . "img/flags/4x3/" . key( $code ) . ".svg";
+	}
 
 	return '';
 }
@@ -59,10 +138,11 @@ function translate_menu(){
 
 	$menu = wp_nav_menu( [ 'theme_location' => 'main_menu_' . current_lang() ] + $add_args );
 
-	if( !empty($menu) )
+	if( ! empty( $menu ) ){
 		return $menu;
-	else
-		return wp_nav_menu( [ 'theme_location' => 'main_menu_ru' ] + $add_args );
+	}
+
+	return wp_nav_menu( [ 'theme_location' => 'main_menu_ru' ] + $add_args );
 }
 
 // HTML ----
