@@ -14,12 +14,12 @@ class I18n_Rewrite_Rules {
 
 	public static function init(): void {
 
-		$hook_name = is_admin() ? 'setup_theme' : 'wp' /*'do_parse_request'*/;
-		add_filter( $hook_name, [ __CLASS__, 'do_parse_request' ], 0 );
+		$hook_name = is_admin() ? 'setup_theme' : 'wp';
+		add_filter( $hook_name, [ __CLASS__, '_do_parse_request' ], 0 );
 		//add_filter( 'init', array( __CLASS__, 'do_parse_request'), PHP_INT_MAX );
 
 		// add rw tag + query var
-		add_rewrite_tag( '%lang%', '('. Langs::$langs_regex .')' );
+		add_rewrite_tag( '%lang%', '('. Langs()->langs_regex .')' );
 
 		foreach (
 			[
@@ -57,13 +57,13 @@ class I18n_Rewrite_Rules {
 
 	// удалим `en/` из `RewriteBase /en/` или RewriteRule . `/en/index.php [L]`
 	static function fix_home_url_in_mod_rewrite_rules( $rules ){
-		return preg_replace( '~/('. Langs::$langs_regex .')/~', '/', $rules );
+		return preg_replace( '~/('. Langs()->langs_regex .')/~', '/', $rules );
 	}
 
 	static function fix_home_url( $url, $path ){
 
 		// язык еще не определен
-		if( ! Langs::$lang ){
+		if( ! current_lang() ){
 			return $url;
 		}
 
@@ -95,7 +95,7 @@ class I18n_Rewrite_Rules {
 		}
 
 		// в $path указан язык - ничего не делаем...
-		if( $path && preg_match( '~^' . i18n_opt()->URI_prefix . '/?(?:' . Langs::$langs_regex . ')/~', $path ) ){
+		if( $path && preg_match( '~^' . i18n_opt()->URI_prefix . '/?(?:' . Langs()->langs_regex . ')/~', $path ) ){
 			return $url;
 		}
 
@@ -106,14 +106,14 @@ class I18n_Rewrite_Rules {
 
 		// добавим обязательный язык для главной
 		if( ! $path || $path === '/' ){
-			return untrailingslashit( $url ) . '/' . Langs::$lang . '/';
+			return untrailingslashit( $url ) . '/' . current_lang() . '/';
 		}
 
 		// указан путь, но нет языка в нем...
 		if( $path ){
 			return preg_replace(
-				'~(https?://[^/]+)(' . i18n_opt()->URI_prefix . '/)(?!(' . Langs::$langs_regex . ')/)~',
-				'\1\2' . Langs::$lang . '/',
+				'~(https?://[^/]+)(' . i18n_opt()->URI_prefix . '/)(?!(' . Langs()->langs_regex . ')/)~',
+				'\1\2' . current_lang() . '/',
 				$url
 			);
 		}
@@ -122,50 +122,52 @@ class I18n_Rewrite_Rules {
 	}
 
 	public static function replacere_lang_tag_permalink( $permalink, $post = 0, $leavename = false ) {
-		$lang = Langs::$lang;
+		$lang = current_lang();
 
 		// find the default post language via a function you have created to
 		// determine the default language url. this could be based on the current
 		// language the user has selected on the frontend, or based on the current
 		// url, or based on the post itself. it is up to you
 		if( $post ){
-			$lang = Langs::$lang;
+			$lang = current_lang();
 		}
 
 		// once you have the default language, it is a simple search and replace
 		return str_replace( '%lang%', $lang, $permalink );
 	}
 
-	public static function do_parse_request( $cur ){
+	public static function _do_parse_request( $cur ){
 
-		self::get_page_permastruct();
-		self::get_author_permastruct();
-		self::correct_extras();
+		self::correct_page_permastruct();
+		self::correct_author_permastruct();
+		self::correct_extra_permastructs();
 
 		return $cur;
 	}
 
-	protected static function get_page_permastruct(){
+	protected static function correct_page_permastruct(){
 		global $wp_rewrite;
 
 		if( empty( $wp_rewrite->permalink_structure ) ){
-			return $wp_rewrite->page_structure = '';
+			$wp_rewrite->page_structure = '';
+			return;
 		}
 
-		return $wp_rewrite->page_structure = self::add_lang_prefix_tag( $wp_rewrite->root . '%pagename%' );
+		$wp_rewrite->page_structure = self::add_lang_prefix_tag( $wp_rewrite->root . '%pagename%' );
 	}
 
-	protected static function get_author_permastruct(){
+	protected static function correct_author_permastruct(){
 		global $wp_rewrite;
 
 		if( empty( $wp_rewrite->permalink_structure ) ){
-			return $wp_rewrite->author_structure = '';
+			$wp_rewrite->author_structure = '';
+			return;
 		}
 
-		return $wp_rewrite->author_structure = self::add_lang_prefix_tag( $wp_rewrite->front . $wp_rewrite->author_base . '/%author%');
+		$wp_rewrite->author_structure = self::add_lang_prefix_tag( $wp_rewrite->front . $wp_rewrite->author_base . '/%author%' );
 	}
 
-	protected static function correct_extras(): void {
+	protected static function correct_extra_permastructs(): void {
 		global $wp_rewrite;
 
 		foreach( $wp_rewrite->extra_permastructs as & $val ){
@@ -211,13 +213,13 @@ class I18n_Rewrite_Rules {
 				return 'matches[' . ( (int) $mm[1] + 1 ) . ']';
 			}, $query );
 
-			$new_rules[ '(' . Langs::$langs_regex . ")/$rule" ] = $query;
+			$new_rules[ '(' . Langs()->langs_regex . ")/$rule" ] = $query;
 		}
 
 		// home
 		if( i18n_opt()->process_home_url ){
-			//$new_rules = [ '^(' . Langs::$langs_regex . ')/?$' => 'index.php?lang=$matches[1]' ] + $new_rules;
-			$new_rules = [ '^(' . Langs::$langs_regex . ')/?$' => 'index.php' ] + $new_rules;
+			//$new_rules = [ '^(' . Langs()->langs_regex . ')/?$' => 'index.php?lang=$matches[1]' ] + $new_rules;
+			$new_rules = [ '^(' . Langs()->langs_regex . ')/?$' => 'index.php' ] + $new_rules;
 		}
 
 		return $new_rules;

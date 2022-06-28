@@ -14,7 +14,7 @@
  */
 function langs_data( $type = false ){
 
-	$langs = Langs::$langs_data;
+	$langs = Langs()->langs_data;
 
 	if( $type === 'codes' || $type === 'ids' ){
 		return array_keys( $langs );
@@ -41,7 +41,7 @@ function langs_data( $type = false ){
  * @return string
  */
 function current_lang(){
-	return Langs::$lang;
+	return Langs()->lang;
 }
 
 /**
@@ -52,7 +52,7 @@ function current_lang(){
  * @return string Passed lang if it exists in the list of current languages. $default otherwise.
  */
 function sanitize_lang( $lang, $default = '' ){
-	return Langs::is_lang_active( $lang ) ? $lang : $default;
+	return Langs()->is_lang_active( $lang ) ? $lang : $default;
 }
 
 /**
@@ -62,7 +62,7 @@ function sanitize_lang( $lang, $default = '' ){
  * @return bool
  */
 function is_current_lang_default(){
-	return Langs::$lang === i18n_opt()->default_lang;
+	return current_lang() === i18n_opt()->default_lang;
 }
 
 ## Получает URL флага по коду страниы
@@ -79,12 +79,12 @@ function uri_replace_lang_prefix( $url, $new_lang = '' ){
 		$new_lang = current_lang();
 	}
 
-	return preg_replace( '~^(https?://[^/]+)?('. i18n_opt()->URI_prefix .'/)(?:'. Langs::$langs_regex .')(?=/)~', "\\1\\2$new_lang", $url, 1 );
+	return preg_replace( '~^(https?://[^/]+)?('. i18n_opt()->URI_prefix .'/)(?:'. Langs()->langs_regex .')(?=/)~', "\\1\\2$new_lang", $url, 1 );
 }
 
 ## удаляет префикс языка из переданного URL
 function uri_delete_lang_prefix( $url ){
-	$url = preg_replace( '~^(https?://[^/]+)?('. i18n_opt()->URI_prefix .'/)(?:'. Langs::$langs_regex .')(?=/)~', '\1\2', $url, 1 );
+	$url = preg_replace( '~^(https?://[^/]+)?('. i18n_opt()->URI_prefix .'/)(?:'. Langs()->langs_regex .')(?=/)~', '\1\2', $url, 1 );
 	return preg_replace( '~(?<!:)/+~', '/', $url ); // //bar >>> /bar
 }
 
@@ -190,9 +190,11 @@ function _get_post_field_i18n( $post, $field = 'content' ){
 function hb_switch_locale( $set_locale, $domain = 'hb' ){
 	global $l10n, $locale, $hb_MOs, $hb_switched_locale;
 
+	$langs_data = langs_data();
+
 	// aliases: ru >>> ru_RU
-	if( isset( Langs::$langs_data[ $set_locale ] ) ){
-		$set_locale = Langs::$langs_data[ $set_locale ]['locale'];
+	if( isset( $langs_data[ $set_locale ] ) ){
+		$set_locale = $langs_data[ $set_locale ]['locale'];
 	}
 
 	// save original

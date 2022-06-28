@@ -72,7 +72,7 @@ function switch_lang_links_html(){
 	$items = [];
 
 	foreach( langs_data() as $lang => $data ){
-		$url = "/$lang/". preg_replace('~^/(?:'. Langs::$langs_regex .')/~', '', $_SERVER['REQUEST_URI'] );
+		$url = "/$lang/". preg_replace('~^/(?:'. Langs()->langs_regex .')/~', '', $_SERVER['REQUEST_URI'] );
 
 		$items[] = '
 		<li class="langs__item">
