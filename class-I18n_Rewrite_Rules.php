@@ -1,51 +1,40 @@
 <?php
-/*
-if(!is_admin()) add_action('get_header', 'debug_rewrite', 90);
-function debug_rewrite(  ){
-	global $wp_rewrite;
-	global $wp_query;
 
-	die( print_r($wp_query) );
-	die( print_r($wp_rewrite) );
+// require_once __DIR__ . '/_debug.php';
+
+/**
+ * @return I18n_Rewrite_Rules
+ */
+function I18n_Rules(){
+	return I18n_Rewrite_Rules::instance();
 }
-//*/
-
-/*
-add_filter( 'query_vars', function( $public_query_vars ){
-	die( print_r($public_query_vars) );
-	return $public_query_vars;
-} );
-//*/
-
-/*
-add_filter( 'pre_get_posts', function($query){
-	die( print_r($query) );
-	unset( $query->query['lang'], $query->query_vars['lang'] );
-});
-//*/
-
-/*
-add_filter( 'request', function($query){
-	die( print_r($query) );
-	unset( $query->query['lang'], $query->query_vars['lang'] );
-} );
-//*/
-
-/*
-add_filter( 'pre_handle_404', function($false, $wp_query){
-	die( print_r($wp_query) );
-}, 10, 2 );
-//*/
-
-
 
 class I18n_Rewrite_Rules {
 
-	static $leave_origin_rules = false; // оставить в ЧПУ оригинальные правила?
+	/**
+	 * Class options.
+	 *
+	 * @var object|mixed|void
+	 */
+	public array $opts;
+
+	public static function instance(){
+		static $inst;
+		$inst || $inst = new self();
+		return $inst;
+	}
+
+	private function __construct() {
+
+		$this->opts = apply_filters( 'i18n__options', [
+			// (bool) Нужно ли использовать префикс языка для главной home_url().
+			'process_home_url' => true,
+		] );
+
+	}
 
 	static function early_init(){
 
-		//
 		add_filter( 'rewrite_rules_array', [ __CLASS__, 'global_rules_correction' ], PHP_INT_MAX );
 
 		// fix permalinks
@@ -86,16 +75,18 @@ class I18n_Rewrite_Rules {
 			add_filter( $filter_name, [ __CLASS__, 'replacere_lang_tag_permalink' ], 11, 3 );
 		}
 
-		add_filter( 'home_url',         [ __CLASS__, 'fix_home_url' ], 10, 2 );
-		add_filter( 'network_home_url', [ __CLASS__, 'fix_home_url' ], 10, 2 );
+		if( I18n_Rules()->opts['process_home_url'] ){
+			add_filter( 'home_url',         [ __CLASS__, 'fix_home_url' ], 10, 2 );
+			add_filter( 'network_home_url', [ __CLASS__, 'fix_home_url' ], 10, 2 );
+		}
 
 		// удалим `en/` из `RewriteBase /en/` или RewriteRule . `/en/index.php [L]`
 		add_filter( 'mod_rewrite_rules', [ __CLASS__, 'fix_home_url_in_mod_rewrite_rules' ] );
 	}
 
+	// удалим `en/` из `RewriteBase /en/` или RewriteRule . `/en/index.php [L]`
 	static function fix_home_url_in_mod_rewrite_rules( $rules ){
-		// удалим `en/` из `RewriteBase /en/` или RewriteRule . `/en/index.php [L]`
-		return preg_replace( '~/(?:'. Langs::$langs_regex .')/~', '/', $rules );
+		return preg_replace( '~/('. Langs::$langs_regex .')/~', '/', $rules );
 	}
 
 	static function fix_home_url( $url, $path ){
@@ -218,38 +209,43 @@ class I18n_Rewrite_Rules {
 		return '/%lang%/'. $struct;
 	}
 
-	## заменяет все правила перезаписи, разом...
+	/**
+	 * Заменяет все правила перезаписи, разом...
+	 *
+	 * @param $rules
+	 *
+	 * @return array|string[]
+	 */
 	static function global_rules_correction( $rules ){
 
 		$new_rules = [];
 
+		// add prefix for all rules
 		foreach( $rules as $rule => $query ){
 
-			// skip prefix
+			// skip
 			if(
 				preg_match( '~^(robots|favicon)~', $rule ) ||
 				preg_match( '~^\^~', $rule )
 			){
 				$new_rules[ $rule ] = $query;
+
+				continue;
 			}
+
 			// add prefix
-			else {
-				$query = preg_replace_callback( '~matches\[([0-9]+)\]~', function($mm){
-					return 'matches['. ( (int) $mm[1] + 1 ) . ']';
-				} , $query );
+			$query = preg_replace_callback( '~matches\[([0-9]+)\]~', function( $mm ) {
+				return 'matches[' . ( (int) $mm[1] + 1 ) . ']';
+			}, $query );
 
-				//$query = str_replace('index.php?', 'index.php?lang=$matches[1]&', $query );
-				//$query = str_replace('&&', '&', $query );
-				//$query = rtrim( $query, '&' );
-
-				$new_rules[ '('. Langs::$langs_regex .')/' . $rule ] = $query;
-			}
-
+			$new_rules[ '(' . Langs::$langs_regex . ")/$rule" ] = $query;
 		}
 
-		// главная
-		//$new_rules = array( '^('. Langs::$langs_regex .')/?$' => 'index.php?lang=$matches[1]' ) + $new_rules;
-		$new_rules = [ '^(' . Langs::$langs_regex . ')/?$' => 'index.php' ] + $new_rules;
+		// home
+		if( I18n_Rules()->opts['process_home_url'] ){
+			//$new_rules = [ '^(' . Langs::$langs_regex . ')/?$' => 'index.php?lang=$matches[1]' ] + $new_rules;
+			$new_rules = [ '^(' . Langs::$langs_regex . ')/?$' => 'index.php' ] + $new_rules;
+		}
 
 		return $new_rules;
 	}

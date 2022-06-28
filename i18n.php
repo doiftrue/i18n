@@ -5,7 +5,7 @@
  * Description: Adds `/ru`, `/en` ... prefix to URL. Save current lang to cookies.
  * Author:      Kama
  * Author URI:  https://wp-kama.ru/
- * Version:     1.2.0
+ * Version:     1.2.1
  */
 
 // TODO добавить и проверять на автомате исключение в ЧПУ или htaccess для hybridauth - RewriteRule ^(content/.*/hybridauth/.*) $1 [L]
@@ -28,6 +28,7 @@ I18N_MUPLUG_INSTALL ?
 	add_action( 'plugins_loaded', 'i18n_init' );
 
 function i18n_init() {
+
 	Langs::instance()->init();
 }
 

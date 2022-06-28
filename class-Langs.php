@@ -60,6 +60,7 @@ class Langs {
 		// после установки локали...
 		//load_muplugin_textdomain( 'i18n', plugin_basename(I18N_PATH) .'/lang' );
 
+		I18n_Rewrite_Rules::instance();
 		I18n_Rewrite_Rules::early_init();
 
 		add_action( 'init', [ 'I18n_Rewrite_Rules', 'init' ], 0 );
@@ -185,7 +186,6 @@ class Langs {
 			$URI = substr( $URI, strlen( self::$URI_prefix ) );
 		}
 
-		// возомжность отключить перенаправление через фильтр.
 		/**
 		 * Allow to disble redirect.
 		 *
@@ -196,20 +196,40 @@ class Langs {
 			return;
 		}
 
-		// исключения
-		if(
-			$URI === '/robots.txt'
-			// /wp-json/
-			|| preg_match( '~/' . rest_get_url_prefix() . '~', $URI )
+		$URI_parts = wp_parse_url( $URI );
+
+		// do nothing for home (if it needs)
+		if( ! I18n_Rules()->opts['process_home_url']
+		    &&
+		    (
+		        '/' === $URI_parts['path']
+				//||
+		        //str_starts_with( $URI_parts['path'], '/page/' )
+		    )
 		){
 			return;
 		}
 
-		// в запросе нет языка, перенаправим на дефолтный
-		if( ! preg_match( '~^/('. self::$langs_regex .')(/|$)~', $URI ) ){
-			wp_safe_redirect( home_url( ( self::$lang ?: self::$default_lang ) . $URI ), 301 );
-			exit;
+		// исключения
+		if(
+			$URI === '/robots.txt'
+			||
+			preg_match( '~^/(wp-sitemap|sitemap)~', $URI_parts['path'] )
+			// /wp-json/
+			|| preg_match( '~/' . rest_get_url_prefix() . '~', $URI_parts['path'] )
+		){
+			return;
 		}
+
+		// язык уже установлен
+		if( preg_match( '~^/('. self::$langs_regex .')(/|$)~', $URI_parts['path'] ) ){
+			return;
+		}
+
+		// перенаправим на дефолтный или ткущий язык
+		$new_url = home_url( ( self::$lang ?: self::$default_lang ) . $URI );
+		wp_safe_redirect( $new_url, 301 );
+		exit;
 
 	}
 
