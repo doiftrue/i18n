@@ -1,8 +1,7 @@
 <?php
-
 /**
  * All available langs data.
- * It's NOT active langs.
+ * It's NOT active langs - just langs data.
  */
 
 return [
@@ -12,7 +11,7 @@ return [
 		'name_sh' 	=> 'Ru',
 		'locale'    => 'ru_RU',
 		'flag'      => I18N_URL .'img/flags/4x3/ru.svg',
-		'flag_path' => '', // ставиться позднее...
+		'flag_path' => '', // determined later.
 	],
 	'en' => [
 		'lang_name' => 'English',

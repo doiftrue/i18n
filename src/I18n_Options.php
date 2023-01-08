@@ -1,8 +1,5 @@
 <?php
 
-/**
- * @return I18n_Rewrite_Rules
- */
 function i18n_opt(): I18n_Options {
 	return I18n_Options::instance();
 }
@@ -25,17 +22,18 @@ class I18n_Options {
 	public static function instance(){
 		static $inst;
 		$inst || $inst = new self();
+
 		return $inst;
 	}
 
 	public function __construct(){
 
 		$this->opts = apply_filters( 'i18n__options', [
-			'default_lang' => 'ru',
-			'active_langs' => [ 'ru' ],
-			// (bool) Нужно ли использовать префикс языка для главной home_url().
+			'default_lang'     => 'ru',
+			'active_langs'     => [ 'ru' ],
+			// (bool) Do we need to use a language prefix for the main page - home_url().
 			'process_home_url' => true,
-			'URI_prefix' => untrailingslashit( parse_url( get_option('home'), PHP_URL_PATH ) ),
+			'URI_prefix'       => untrailingslashit( parse_url( get_option( 'home' ), PHP_URL_PATH ) ),
 		] );
 
 	}
@@ -44,10 +42,11 @@ class I18n_Options {
 		return null !== $this->__get( $name );
 	}
 
-	public function __set( $name, $val ){}
+	public function __set( $name, $val ){
+		return null;
+	}
 
 	public function __get( $name ){
-
 		return $this->opts[ $name ] ?? null;
 	}
 

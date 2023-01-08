@@ -8,7 +8,7 @@
  *
  * @return bool
  */
-function hb_switch_locale( $set_locale, $domain = 'hb' ){
+function hb_switch_locale( $set_locale, $domain = 'hb' ) {
 	global $l10n, $locale, $hb_MOs, $hb_switched_locale;
 
 	$langs_data = langs_data();
@@ -27,6 +27,7 @@ function hb_switch_locale( $set_locale, $domain = 'hb' ){
 	if( 'en_US' === $set_locale ){
 		$hb_switched_locale = $locale;
 		$l10n[ $domain ] = null;
+
 		return true;
 	}
 
@@ -66,7 +67,7 @@ function hb_switch_locale( $set_locale, $domain = 'hb' ){
 function hb_restore_locale( $domain = 'hb' ){
 	global $l10n, $hb_MOs, $hb_switched_locale;
 
-	if( ! empty($hb_switched_locale) ){
+	if( $hb_switched_locale ){
 		$l10n[ $domain ] = $hb_MOs[ $hb_switched_locale ];
 		$hb_switched_locale = null;
 
@@ -76,7 +77,6 @@ function hb_restore_locale( $domain = 'hb' ){
 	return false;
 }
 
-## получает URL флага по ID страниы
 function flag_url_by_country_id( $country_id ){
 
 	/* $data = array(
@@ -126,7 +126,30 @@ function flag_url_by_country_id( $country_id ){
 	return '';
 }
 
-## nav menu под текущий язык
+
+## nav menu for the current language
+function translate_main_menu() {
+
+	$add_args = [
+		'fallback_cb' => '__return_empty_string',
+		'container'   => '',
+		'echo'        => 0,
+	];
+
+	$menu = wp_nav_menu( [ 'theme_location' => 'main_menu_' . current_lang() ] + $add_args );
+	if( $menu ){
+		return $menu;
+	}
+
+	$menu = wp_nav_menu( [ 'theme_location' => 'main_menu_en' ] + $add_args );
+	if( $menu ){
+		return $menu;
+	}
+
+	return wp_nav_menu( [ 'theme_location' => 'main_menu_ru' ] + $add_args );
+}
+
+## nav menu for the current language
 function translate_menu(){
 
 	$add_args = [
@@ -138,37 +161,44 @@ function translate_menu(){
 
 	$menu = wp_nav_menu( [ 'theme_location' => 'main_menu_' . current_lang() ] + $add_args );
 
-	if( ! empty( $menu ) ){
+	if( $menu ){
 		return $menu;
 	}
 
 	return wp_nav_menu( [ 'theme_location' => 'main_menu_ru' ] + $add_args );
 }
 
-// HTML ----
-
-## переключение между языками
+## switching between languages
 function switch_lang_links_html(){
-	$items = [];
 
+	$items = [];
 	foreach( langs_data() as $lang => $data ){
+
 		$url = "/$lang/". preg_replace('~^/(?:'. Langs()->langs_regex .')/~', '', $_SERVER['REQUEST_URI'] );
 
-		$items[] = '
-		<li class="langs__item">
-			<a href="'. esc_url($url) .'" class="langs__link">
-				<img src="'. $data['flag'] .'" alt="'. $lang .'" class="langs__flag">
-			</a>
-		</li>
-		';
+		$items[] = [
+			'url'      => $url,
+			'lang'     => $lang,
+			'flag_src' => $data['flag'],
+		];
 	}
 
-	echo '
+	?>
 	<div class="langs">
 		<ul class="langs__list">
-			'. implode( "\n", $items ) .'
+			<?php foreach( $items as $item ){ ?>
+				<li class="langs__item">
+					<a href="<?= esc_url( $item['url'] ) ?>" class="langs__link">
+						<img src="<?= esc_url( $item['flag_src'] ) ?>"
+						     class="langs__flag"
+						     alt="<?= esc_attr( $item['lang'] ) ?>"
+						     width="40" height="30"
+						>
+					</a>
+				</li>
+			<?php } ?>
 		</ul>
 	</div>
-	';
+	<?php
 }
 

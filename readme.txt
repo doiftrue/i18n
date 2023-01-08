@@ -1,4 +1,4 @@
-=== Meta Box ===
+=== i18n ===
 Stable tag:        trunk
 Tested up to:      6.0
 Contributors:      Kama
@@ -10,19 +10,19 @@ Script for Multi-language site.
 
 == Description ==
 
-Adds `/ru`, `/en` ... prefix to URL. Save current lang to cookies.
+Adds `/ru`, `/en` ... prefix to URL. Save current lang to cookies OR `user_lang` metadata.
 
 
 ### Usage
 
-Install this code as MU-Plugin. And init the plugin like this:
+Install this plugin as mu-plugin and init it like this:
 
-```
+```php
 add_filter( 'i18n__options', function( $opts ){
 
 	$opts = array_merge( $opts, [
 		'default_lang' => 'ru',
-		'active_langs' => [ 'ru' ],
+		'active_langs' => [ 'ru', 'de', 'fr', 'ua' ],
 		'process_home_url' => false,
 	] );
 
@@ -34,32 +34,30 @@ require_once __DIR__ . '/i18n/i18n.php';
 
 
 
-== Installation ==
+== FAQ ==
 
-
-== Frequently Asked Questions ==
-
-
-== Screenshots ==
 
 
 == Changelog ==
 
+### 1.2.5
+* Minor refactoring & code review. Code comments translated to en.
+
 ### 1.2.1
-- Ability to set options via hook `i18n__options` before plugin init.
-- new option `process_home_url`.
-- Some Refactor.
+* Ability to set options via hook `i18n__options` before plugin init.
+* new option `process_home_url`.
+* Some Refactor.
 
 ### 1.2.0
-- Refactor improvements.
+* Refactor improvements.
 
 ### 1.1.2
-- Improve for `_get_meta_i18n()`.
+* Improve for `_get_meta_i18n()`.
 
 ### 1.0.1
-- NEW: Дополнительный пример в `example_hooks.php`.
-- NEW: Параметр `$new_lang` в `uri_replace_lang_prefix()` стал необязательный.
+* NEW: Дополнительный пример в `example_hooks.php`.
+* NEW: Параметр `$new_lang` в `uri_replace_lang_prefix()` стал необязательный.
 
 ### 1.0
-- NEW: Sub-directories support: `https://dom.com/subdir/en`.
+* NEW: Sub-directories support: `https://dom.com/subdir/en`.
 

@@ -1,7 +1,6 @@
 <?php
-
 /**
- * Функции обертки для использвоания в теме и плагинах...
+ * Wrapper functions for use in themes and plugins.
  */
 
 /**
@@ -36,11 +35,9 @@ function langs_data( $type = false ){
 }
 
 /**
- * Gets current defined language. Ex: ru, en
- *
- * @return string
+ * Gets current defined language. Eg: ru, en.
  */
-function current_lang(){
+function current_lang(): string {
 	return Langs()->lang;
 }
 
@@ -56,25 +53,27 @@ function sanitize_lang( $lang, $default = '' ){
 }
 
 /**
- * Проверяет являться ли текущий язык языком по умолчанию (языком на котором
- * в первую очередь работает сайт, на котором храняться базовые данные в БД).
- *
- * @return bool
+ * Checks if the current language is the default language
+ * (the language in which the site works, in which the data in the database is stored).
  */
-function is_current_lang_default(){
+function is_current_lang_default(): bool {
 	return current_lang() === i18n_opt()->default_lang;
 }
 
-## Получает URL флага по коду страниы
-function flag_url_by_country_code( $country_code ){
+/**
+ * Gets the flag URL by country code
+ */
+function flag_url_by_country_code( $country_code ) {
 
-	'en' === $country_code && $country_code = 'us';
-	'pt-br' === $country_code && $country_code = 'br';
+	( 'en' === $country_code )    && ( $country_code = 'us' );
+	( 'pt-br' === $country_code ) && ( $country_code = 'br' );
 
-	return I18N_URL . "img/flags/4x3/". strtolower( $country_code ) .".svg";
+	return I18N_URL . 'img/flags/4x3/' . strtolower( $country_code ) . ".svg";
 }
 
-## заменяет префикс языка на указанный в переданном URL
+/**
+ * Replaces the language prefix in the passed URL.
+ */
 function uri_replace_lang_prefix( $url, $new_lang = '' ){
 
 	if( ! $new_lang ){
@@ -88,118 +87,16 @@ function uri_replace_lang_prefix( $url, $new_lang = '' ){
 }
 
 /**
- * Удаляет префикс языка из переданного URL.
- *
- * @param string $url
- *
- * @return string
+ * Removes the language prefix from the passed URL.
  */
-function uri_delete_lang_prefix( $url ){
+function uri_delete_lang_prefix( string $url ): string {
 
 	$url = preg_replace(
 		'~^(https?://[^/]+)?('. i18n_opt()->URI_prefix .'/)(?:'. Langs()->langs_regex .')(?=/)~',
 		'\1\2', $url, 1
 	);
 
-	return preg_replace( '~(?<!:)/+~', '/', $url ); // //foo >>> /foo
+	return preg_replace( '~(?<!:)/+~', '/', $url ); //> //foo >>> /foo
 }
-
-
-// i18n functions ---
-
-## Получает переведенное на текущий язык произвольное поле комментария
-function get_comment_meta_i18n( $post_id, $meta_key, $single = true ) {
-	return _get_meta_i18n( 'get_comment_meta', $post_id, $meta_key, $single );
-}
-
-## Получает переведенное на текущий язык произвольное поле
-function get_post_meta_i18n( $post_id, $meta_key, $single = true ) {
-	return _get_meta_i18n( 'get_post_meta', $post_id, $meta_key, $single );
-}
-
-## Получает переведенное на текущий язык произвольное поле
-function get_term_meta_i18n( $term_id, $meta_key, $single = true ) {
-	return _get_meta_i18n( 'get_term_meta', $term_id, $meta_key, $single );
-}
-
-## Получает переведенное на текущий язык метаполе HB юзера
-function get_user_meta_i18n( $obj_id, $meta_key, $single = true ){
-	return _get_meta_i18n( 'get_user_meta', $obj_id, $meta_key, $single );
-}
-
-## Получает переведенное на текущий язык метаполе HB юзера
-function get_hb_user_meta_i18n( $post_id, $meta_key, $single = true ){
-	return _get_meta_i18n( 'get_hb_user_meta', $post_id, $meta_key, $single );
-}
-
-## Получает поле post_content или метаполе content_{lang} на основе текущего языка.
-function get_post_content_i18n( $post ){
-	return _get_post_field_i18n( $post, 'content' );
-}
-
-## Получает поле post_content или метаполе content_{lang} на основе текущего языка.
-## Обертка для get_post_meta_i18n()
-function get_post_title_i18n( $post ){
-	return _get_post_field_i18n( $post, 'title' );
-}
-
-/**
- * Получает метаполе на основе указанной функции и текущего языка.
- *
- * @param string $meta_func Функция получения метаполя: get_post_meta, get_term_meta ...
- * @param int    $id
- * @param string $meta_key
- * @param bool   $single
- *
- * @return mixed
- */
-function _get_meta_i18n( $meta_func, $id, $meta_key, $single ){
-
-	$meta = $meta_func( $id, "{$meta_key}_" . current_lang(), $single );
-	if( $meta !== '' ){
-		return $meta;
-	}
-
-	// fallback
-	$meta = $meta_func( $id, "{$meta_key}_" . i18n_opt()->default_lang, $single );
-	if( $meta !== '' ){
-		return $meta;
-	}
-
-	return $meta_func( $id, $meta_key, $single );
-}
-
-/**
- * Получает поле поста или метаполе ПОЛЕ_{lang} на основе текущего языка.
- * Обертка для get_post_meta_i18n()
- *
- * @param int|WP_Post $post
- * @param string      $field
- *
- * @return mixed|string
- */
-function _get_post_field_i18n( $post, $field = 'content' ) {
-
-	$post = get_post( $post );
-
-	if( ! $post ){
-		return '';
-	}
-
-	$value = $post->{"post_$field"};
-
-	if( $value && is_current_lang_default() ){
-		return $value;
-	}
-
-	$meta_value = get_post_meta_i18n( $post->ID, $field );
-
-	if( $meta_value ){
-		$value = $meta_value;
-	}
-
-	return $value;
-}
-
 
 

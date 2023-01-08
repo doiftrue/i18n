@@ -1,8 +1,5 @@
 <?php
 
-/**
- * @return Langs
- */
 function Langs(): Langs {
 	return Langs::instance();
 }
@@ -46,7 +43,9 @@ class Langs {
 		return false;
 	}
 
-	public function __set( $name, $val ){}
+	public function __set( $name, $val ){
+		return null;
+	}
 
 	public function __get( $name ){
 
@@ -58,6 +57,9 @@ class Langs {
 	}
 
 	private function __construct(){
+	}
+
+	public function run(): void {
 
 		// init options
 		i18n_opt();
@@ -71,6 +73,7 @@ class Langs {
 			self::$langs_data[ $lang ]['flag_path'] = str_replace( I18N_URL, I18N_PATH, $langs_data[ $lang ]['flag'] );
 		}
 
+		$this->init();
 	}
 
 	public function init(): void {
@@ -92,35 +95,39 @@ class Langs {
 	}
 
 	/**
-	 * Определяет текущий язык и устанавливает его. Устанавливает локаль и куки.
+	 * Detects the current language and sets it. Sets locale and cookies.
 	 */
 	private function set_lang(): void {
 
-		// установим self::$lang
 		if(
-			// пропускаем странные URL: на css, js, php, с запросами, от wp и т.д.
-			! preg_match( '~[.]|wp-~', $_SERVER['REQUEST_URI'] ) // ?= юзать нельзя - это параметры запроса
+			// Skip weird URLs: css, js, php, with queries, from wp, etc.
+			! preg_match( '~[.]|wp-~', $_SERVER['REQUEST_URI'] ) // ?= it cannot be used - these are query parameters
 			&&
-			// определяем по URL
-			preg_match( '~^'. i18n_opt()->URI_prefix .'/('. self::$langs_regex .')(/|$)~', $_SERVER['REQUEST_URI'], $mm )
+			// determine by URL
+			preg_match( '~^' . i18n_opt()->URI_prefix . '/(' . self::$langs_regex . ')(/|$)~', $_SERVER['REQUEST_URI'], $mm )
 		){
 			self::$lang = $mm[1];
 		}
-		elseif( ! empty($_GET['lang']) ){
+		elseif( ! empty( $_GET['lang'] ) ){
 			self::$lang = trim( $_GET['lang'] );
 		}
-		elseif( ! empty($_POST['lang']) ){
+		elseif( ! empty( $_POST['lang'] ) ){
 			self::$lang = trim( $_POST['lang'] );
 		}
-		// wp_get_current_user() определяется после `plugins_loaded`
-		elseif( function_exists('get_current_hb_user') && ($cuser = get_current_hb_user()) && ($user_lang = $cuser->user_lang) ){
+		// NOTE: wp_get_current_user() determined after `plugins_loaded`.
+		elseif(
+			function_exists( 'get_current_hb_user' )
+			&& ( $cuser = get_current_hb_user() )
+			&& ( $user_lang = $cuser->user_lang ) )
+		{
 			self::$lang = $user_lang;
 		}
+		// NOTE: wp_get_current_user() determined after `plugins_loaded`.
 		elseif(
 			0 // skip
-			// TODO определить WP юзера по кукам (до plugins_loaded) WP is_user_logged_in
+			// TODO identify WP user by cookies (before plugins_loaded) WP is_user_logged_in
 			&& ( $uid = 0 )
-			&& ( $user_lang = get_user_meta( $uid, 'user_lang', 1) )
+			&& ( $user_lang = get_user_meta( $uid, 'user_lang', true ) )
 		){
 			self::$lang = $user_lang;
 		}
@@ -132,7 +139,7 @@ class Langs {
 			self::$lang = i18n_opt()->default_lang;
 		}
 
-		// локаль, для фронта и аякс
+		// locale, for front and ajax
 		if( ! is_admin() || wp_doing_ajax() ){
 
 			$lang_locale = $this->is_lang_active( self::$lang ) ? self::$langs_data[ self::$lang ]['locale'] : '';
@@ -145,7 +152,7 @@ class Langs {
 			}
 		}
 
-		// кука языка
+		// language cookie
 		if( ! is_admin() && ! wp_doing_ajax() ){
 
 			if( I18N_IS_MUPLUG_INSTALL ){
@@ -166,17 +173,19 @@ class Langs {
 	/**
 	 * Checks if specified lang is one of the active langs.
 	 *
-	 * @param string $lang Lang to check or current self::$lang.
+	 * @param string $lang  Lang to check or current self::$lang.
 	 *
 	 * @return bool
 	 */
-	public function is_lang_active( $lang = '' ){
+	public function is_lang_active( $lang = '' ): bool {
 
 		return isset( self::$langs_data[ $lang ?: self::$lang ] );
 	}
 
-	# устанавливает куку языка
-	public static function set_cookie(){
+	/**
+	 * Sets the language cookie.
+	 */
+	public static function set_cookie(): void {
 
 		if( empty( $_COOKIE['lang'] ) || $_COOKIE['lang'] != self::$lang ){
 
@@ -185,10 +194,9 @@ class Langs {
 		}
 	}
 
-	# устанавливает куку языка
-	public static function update_user_lang(){
+	public static function update_user_lang(): void {
 
-		if( function_exists('get_current_hb_user') ){
+		if( function_exists( 'get_current_hb_user' ) ){
 			$cuser = get_current_hb_user();
 		}
 		else {
@@ -203,15 +211,19 @@ class Langs {
 
 			if( function_exists( 'update_hb_user' ) ){
 				update_hb_user( [ 'ID' => $cuser->ID, 'user_lang' => self::$lang ] );
-			} // обновим с очисткой кэша
-			else{
+			}
+			// update with cache cleanup
+			else {
 				update_user_meta( $cuser->ID, 'user_lang', self::$lang );
 			}
 		}
 	}
 
-	# редирект на нужный язык, если его нет в URL, только для запросов с шаблоном - template_redirect
-	public static function lang_redirect(){
+	/**
+	 * Redirects to the language URL, if lang is not in the URL.
+	 * Only for requests with a template - `template_redirect`.
+	 */
+	public static function lang_redirect(): void {
 
 		$URI = $_SERVER['REQUEST_URI'];
 
@@ -233,7 +245,8 @@ class Langs {
 		$URI_parts = wp_parse_url( $URI );
 
 		// do nothing for home (if it needs)
-		if( ! i18n_opt()->process_home_url
+		if(
+			! i18n_opt()->process_home_url
 		    &&
 		    (
 		        '/' === $URI_parts['path']
@@ -265,7 +278,6 @@ class Langs {
 
 		wp_safe_redirect( $new_url, 301 );
 		exit;
-
 	}
 
 }

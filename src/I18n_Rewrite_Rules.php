@@ -51,26 +51,32 @@ class I18n_Rewrite_Rules {
 			add_filter( 'network_home_url', [ __CLASS__, 'fix_home_url' ], 10, 2 );
 		}
 
-		// удалим `en/` из `RewriteBase /en/` или RewriteRule . `/en/index.php [L]`
 		add_filter( 'mod_rewrite_rules', [ __CLASS__, 'fix_home_url_in_mod_rewrite_rules' ] );
 	}
 
-	// удалим `en/` из `RewriteBase /en/` или RewriteRule . `/en/index.php [L]`
-	static function fix_home_url_in_mod_rewrite_rules( $rules ){
+	/**
+	 * Remove `en/` from `RewriteBase /en/` or RewriteRule . `/en/index.php [L]`.
+	 *
+	 * @param string $rules
+	 *
+	 * @return string
+	 */
+	public static function fix_home_url_in_mod_rewrite_rules( $rules ) {
 		return preg_replace( '~/('. Langs()->langs_regex .')/~', '/', $rules );
 	}
 
-	static function fix_home_url( $url, $path ){
+	public static function fix_home_url( $url, $path ){
 
-		// язык еще не определен
+		// language has not yet been determined
 		if( ! current_lang() ){
 			return $url;
 		}
 
-		// Нужно, чтобы URL изменялся только после основного запроса, потому что
-		// в нем эта функция должна вернуть результат без изменений...
-		// справедливо только для фронта.
-		// см https://wp-kama.ru/function/WP::parse_request
+		/**
+		 * We need the URL to change only after the main query, because this
+		 * function should return the result without changes. (just for the frontend).
+		 * @see https://wp-kama.ru/function/WP::parse_request
+		 */
 		if( ! did_action( 'parse_request' ) && ! is_admin() && ! wp_doing_ajax() ){
 			return $url;
 		}
@@ -89,27 +95,27 @@ class I18n_Rewrite_Rules {
 			return $url;
 		}
 
-		// исключение для wp-json
+		// wp-json exception
 		if( false !== strpos( $url, '/' . rest_get_url_prefix() . '/' ) ){
 			return $url;
 		}
 
-		// в $path указан язык - ничего не делаем...
+		// the language is specified in $path - don't do anything.
 		if( $path && preg_match( '~^' . i18n_opt()->URI_prefix . '/?(?:' . Langs()->langs_regex . ')/~', $path ) ){
 			return $url;
 		}
 
-		// замена тега '%lang%'
+		// Replace '%lang%' tag
 		if( false !== strpos( $url, '%lang%' ) ){
 			return self::replacere_lang_tag_permalink( $url );
 		}
 
-		// добавим обязательный язык для главной
+		// add mandatory language for homepage
 		if( ! $path || $path === '/' ){
 			return untrailingslashit( $url ) . '/' . current_lang() . '/';
 		}
 
-		// указан путь, но нет языка в нем...
+		// path is specified, but there is no language in it.
 		if( $path ){
 			return preg_replace(
 				'~(https?://[^/]+)(' . i18n_opt()->URI_prefix . '/)(?!(' . Langs()->langs_regex . ')/)~',
@@ -185,13 +191,9 @@ class I18n_Rewrite_Rules {
 	}
 
 	/**
-	 * Заменяет все правила перезаписи, разом...
-	 *
-	 * @param $rules
-	 *
-	 * @return array|string[]
+	 * Replaces all overwriting rules, all at once.
 	 */
-	public static function global_rules_correction( $rules ): array {
+	public static function global_rules_correction( array $rules ): array {
 
 		$new_rules = [];
 
@@ -200,8 +202,9 @@ class I18n_Rewrite_Rules {
 
 			// skip
 			if(
-				preg_match( '~^(robots|favicon)~', $rule ) ||
-				preg_match( '~^\^~', $rule )
+				preg_match( '~^(robots|favicon)~', $rule )
+				||
+				preg_match( '~^\^~', $rule ) // TODO consider list all strings to skip separatelly
 			){
 				$new_rules[ $rule ] = $query;
 
@@ -224,7 +227,6 @@ class I18n_Rewrite_Rules {
 
 		return $new_rules;
 	}
-
 
 }
 
