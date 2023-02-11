@@ -1,7 +1,16 @@
 <?php
+
 /**
  * Wrapper functions for use in themes and plugins.
  */
+
+function Langs(): Langs {
+	return Langs::instance();
+}
+
+function i18n_opt(): I18n_Options {
+	return I18n_Options::instance();
+}
 
 /**
  * Gets languages data.

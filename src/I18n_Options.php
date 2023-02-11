@@ -1,9 +1,5 @@
 <?php
 
-function i18n_opt(): I18n_Options {
-	return I18n_Options::instance();
-}
-
 /**
  * @property-read bool     $process_home_url  Do we need to use a language prefix for the main home_url().
  * @property-read string[] $active_langs      Active langs slugs [ 'ru', 'en' ].
@@ -14,10 +10,8 @@ class I18n_Options {
 
 	/**
 	 * Plugin options.
-	 *
-	 * @var array
 	 */
-	private $opts;
+	private array $options;
 
 	public static function instance(){
 		static $inst;
@@ -28,7 +22,7 @@ class I18n_Options {
 
 	public function __construct(){
 
-		$this->opts = apply_filters( 'i18n__options', [
+		$this->options = apply_filters( 'i18n__options', [
 			'default_lang'     => 'ru',
 			'active_langs'     => [ 'ru' ],
 			// (bool) Do we need to use a language prefix for the main page - home_url().
@@ -47,7 +41,7 @@ class I18n_Options {
 	}
 
 	public function __get( $name ){
-		return $this->opts[ $name ] ?? null;
+		return $this->options[ $name ] ?? null;
 	}
 
 }

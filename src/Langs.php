@@ -1,9 +1,5 @@
 <?php
 
-function Langs(): Langs {
-	return Langs::instance();
-}
-
 /**
  * @property-read array  $langs_data
  * @property-read string $langs_regex
@@ -15,19 +11,17 @@ class Langs {
 	 * All active  langs data.
 	 * @var array[]
 	 */
-	private static $langs_data;
+	private static array $langs_data;
 
 	/**
 	 * Regular for ru|en, to simplify.
-	 * @var string
 	 */
-	private static $langs_regex = '';
+	private static string $langs_regex = '';
 
 	/**
 	 * Current language ru|en|... Default is empty string - not defined.
-	 * @var string
 	 */
-	private static $lang = '';
+	private static string $lang = '';
 
 	/**
 	 * @return self
@@ -177,7 +171,7 @@ class Langs {
 	 *
 	 * @return bool
 	 */
-	public function is_lang_active( $lang = '' ): bool {
+	public function is_lang_active( string $lang = '' ): bool {
 
 		return isset( self::$langs_data[ $lang ?: self::$lang ] );
 	}
@@ -187,7 +181,7 @@ class Langs {
 	 */
 	public static function set_cookie(): void {
 
-		if( empty( $_COOKIE['lang'] ) || $_COOKIE['lang'] != self::$lang ){
+		if( empty( $_COOKIE['lang'] ) || $_COOKIE['lang'] !== self::$lang ){
 
 			setcookie( 'lang', self::$lang, ( time() + DAY_IN_SECONDS * 365 ), COOKIEPATH, COOKIE_DOMAIN );
 			$_COOKIE['lang'] = self::$lang;

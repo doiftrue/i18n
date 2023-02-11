@@ -56,12 +56,8 @@ class I18n_Rewrite_Rules {
 
 	/**
 	 * Remove `en/` from `RewriteBase /en/` or RewriteRule . `/en/index.php [L]`.
-	 *
-	 * @param string $rules
-	 *
-	 * @return string
 	 */
-	public static function fix_home_url_in_mod_rewrite_rules( $rules ) {
+	public static function fix_home_url_in_mod_rewrite_rules( string $rules ): string {
 		return preg_replace( '~/('. Langs()->langs_regex .')/~', '/', $rules );
 	}
 
@@ -116,17 +112,22 @@ class I18n_Rewrite_Rules {
 		}
 
 		// path is specified, but there is no language in it.
-		if( $path ){
-			return preg_replace(
-				'~(https?://[^/]+)(' . i18n_opt()->URI_prefix . '/)(?!(' . Langs()->langs_regex . ')/)~',
-				'\1\2' . current_lang() . '/',
-				$url
-			);
-		}
-
-		return $url;
+		return preg_replace(
+			'~(https?://[^/]+)(' . i18n_opt()->URI_prefix . '/)(?!(' . Langs()->langs_regex . ')/)~',
+			'\1\2' . current_lang() . '/',
+			$url
+		);
 	}
 
+	/**
+	 * Hooks callback function.
+	 *
+	 * @param string  $permalink The post's permalink.
+	 * @param WP_Post $post      The post in question.
+	 * @param bool    $leavename Whether to keep the post name.
+	 *
+	 * @return string
+	 */
 	public static function replacere_lang_tag_permalink( $permalink, $post = 0, $leavename = false ) {
 		$lang = current_lang();
 
@@ -151,7 +152,7 @@ class I18n_Rewrite_Rules {
 		return $cur;
 	}
 
-	protected static function correct_page_permastruct(){
+	protected static function correct_page_permastruct(): void {
 		global $wp_rewrite;
 
 		if( empty( $wp_rewrite->permalink_structure ) ){
@@ -162,7 +163,7 @@ class I18n_Rewrite_Rules {
 		$wp_rewrite->page_structure = self::add_lang_prefix_tag( $wp_rewrite->root . '%pagename%' );
 	}
 
-	protected static function correct_author_permastruct(){
+	protected static function correct_author_permastruct(): void {
 		global $wp_rewrite;
 
 		if( empty( $wp_rewrite->permalink_structure ) ){
