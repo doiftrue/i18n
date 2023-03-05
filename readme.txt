@@ -23,7 +23,7 @@ add_filter( 'i18n__options', function( $opts ){
 	$opts = array_merge( $opts, [
 		'default_lang' => 'ru',
 		'active_langs' => [ 'ru', 'de', 'fr', 'ua' ],
-		'process_home_url' => false,
+		'home_page_add_prefix' => false,
 	] );
 
 	return $opts;
@@ -39,6 +39,12 @@ require_once __DIR__ . '/i18n/i18n.php';
 
 
 == Changelog ==
+
+### 1.3.0
+* The code was refactored: improved, simplified.
+* `wp-sitemap.xml` support and bugfixes.
+* Renamed `process_home_url` to `home_page_add_prefix`.
+* Many handy hooks was added.
 
 ### 1.2.5
 * Minor refactoring & code review. Code comments translated to en.

@@ -72,24 +72,25 @@ class Langs {
 
 	public function init(): void {
 
-		// раньше всех
+		// before anything else
 		self::$langs_regex = implode( '|', array_keys( self::$langs_data ) );
 
 		// Set current lang self::$lang, locale and cookies.
 		$this->set_lang();
 
-		// после установки локали...
+		// After setting the locale...
 		//load_muplugin_textdomain( 'i18n', plugin_basename(I18N_PATH) .'/lang' );
 
 		I18n_Rewrite_Rules::early_init();
-
-		add_action( 'init', [ 'I18n_Rewrite_Rules', 'init' ], 0 );
+		I18n_Permalink_Fixer::early_init();
+		//__NOTUSED__I18n_Permastruct_fixer::early_init();
 
 		add_action( 'template_redirect', [ __CLASS__, 'lang_redirect' ] );
 	}
 
 	/**
-	 * Detects the current language and sets it. Sets locale and cookies.
+	 * Detects the current language and sets it.
+	 * Sets locale and cookies.
 	 */
 	private function set_lang(): void {
 
@@ -150,10 +151,10 @@ class Langs {
 		if( ! is_admin() && ! wp_doing_ajax() ){
 
 			if( I18N_IS_MUPLUG_INSTALL ){
-				// на момент хука 'muplugins_loaded' константы куков пр. COOKIE_DOMAIN еще не определены.
+				// At the 'muplugins_loaded' hook, the cookie constants such as COOKIE_DOMAIN have not yet been defined.
 				add_action( 'plugins_loaded', [ __CLASS__, 'set_cookie' ]);
 
-				// позже, потому что для обновления текущего юзера нужны разные фукнции, которых еще нет до plugins_loaded
+				// later, because to update the current user we need different functions, which do not yet exist before `plugins_loaded`
 				add_action( 'plugins_loaded', [ __CLASS__, 'update_user_lang' ]);
 			}
 			else {
@@ -240,12 +241,11 @@ class Langs {
 
 		// do nothing for home (if it needs)
 		if(
-			! i18n_opt()->process_home_url
+			! i18n_opt()->home_page_add_prefix
 		    &&
 		    (
 		        '/' === $URI_parts['path']
-				//||
-		        //str_starts_with( $URI_parts['path'], '/page/' )
+				|| str_starts_with( $URI_parts['path'], '/page/' )
 		    )
 		){
 			return;
@@ -254,16 +254,15 @@ class Langs {
 		// exceptions
 		if(
 			$URI === '/robots.txt'
-			||
-			preg_match( '~^/(wp-sitemap|sitemap)~', $URI_parts['path'] )
+			|| preg_match( '~^/(wp-sitemap|sitemap)~', $URI_parts['path'] )
 			// /wp-json/
-			|| preg_match( '~/' . rest_get_url_prefix() . '~', $URI_parts['path'] )
+			|| preg_match( sprintf( '~/%s~', rest_get_url_prefix() ), $URI_parts['path'] )
 		){
 			return;
 		}
 
 		// language is already set
-		if( preg_match( '~^/('. self::$langs_regex .')(/|$)~', $URI_parts['path'] ) ){
+		if( preg_match( sprintf( '~^/(%s)(/|$)~', self::$langs_regex ), $URI_parts['path'] ) ){
 			return;
 		}
 

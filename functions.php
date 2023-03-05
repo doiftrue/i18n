@@ -47,7 +47,12 @@ function langs_data( $type = false ){
  * Gets current defined language. Eg: ru, en.
  */
 function current_lang(): string {
-	return Langs()->lang;
+	/**
+	 * Allow to change current language (ru, en).
+	 *
+	 * @param string $lang Current language (ru, en).
+	 */
+	return apply_filters( 'i18n__current_lang', Langs()->lang );
 }
 
 /**

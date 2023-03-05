@@ -8,16 +8,16 @@
  *
  * Author:      Kama
  * Author URI:  https://wp-kama.ru/
- * Version:     1.2.6
+ * Version:     1.3.0
  */
 
 define( 'I18N_PATH', wp_normalize_path( plugin_dir_path( __FILE__ ) ) );
 define( 'I18N_URL',  plugin_dir_url( __FILE__ ) );
 define( 'I18N_IS_MUPLUG_INSTALL', strpos( __DIR__, '/mu-plugins/' ) );
 
-require_once __DIR__ . '/src/I18n_Options.php';
-require_once __DIR__ . '/src/I18n_Rewrite_Rules.php';
-require_once __DIR__ . '/src/Langs.php';
+foreach( glob( __DIR__ . '/src/*.php' ) as $file ){
+	require_once $file;
+}
 require_once __DIR__ . '/functions.php';
 require_once __DIR__ . '/custom/i18n-functions.php';
 
@@ -28,9 +28,9 @@ require_once __DIR__ . '/custom/i18n-functions.php';
 // for debug
 // require_once __DIR__ . '/custom/_debug.php';
 
-I18N_IS_MUPLUG_INSTALL ?
-	add_action( 'muplugins_loaded', 'i18n_init' ) :
-	add_action( 'plugins_loaded', 'i18n_init' );
+I18N_IS_MUPLUG_INSTALL
+	? add_action( 'muplugins_loaded', 'i18n_init' )
+	: add_action( 'plugins_loaded', 'i18n_init' );
 
 function i18n_init() {
 	Langs()->run();
