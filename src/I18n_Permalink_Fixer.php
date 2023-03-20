@@ -93,18 +93,19 @@ class I18n_Permalink_Fixer {
 
 	public static function is_skip_fix_home_url( $url, $path ): bool {
 
-		$trace = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS, 6 ); // fast - 0.025sec for 50k iterations
+		$return = apply_filters( 'i18n__pre_is_skip_fix_home_url', null, $url, $path );
+		if( null !== $return ){
+			return $return;
+		}
 
-		// Don't add LANG prefix if home_url() called from:
-		if(
-			// rest_url()
-			'get_rest_url' === ( $trace[4]['function'] ?? '' )
-			||
-			// WP_Rewrite::rewrite_rules()
-			// robots.txt removed from revrite rules
-			'rewrite_rules' === ( $trace[5]['function'] ?? '' )
-		){
-			return true;
+		// TODO make better logic to not use $trace and foreach
+		// Don't add LANG prefix if home_url() called from one of functions:
+		static $skip_functions = [ 'get_rest_url', 'rewrite_rules' ];
+		$trace = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS, 6 ); // fast - 0.025sec for 50k iterations
+		foreach( $trace as $item ){
+			if( in_array( ( $item['function'] ?? '' ), $skip_functions, true ) ){
+				return true;
+			}
 		}
 
 		// Don't add prefix for default wp-sitemap pages

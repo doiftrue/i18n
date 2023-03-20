@@ -8,7 +8,7 @@
  *
  * Author:      Kama
  * Author URI:  https://wp-kama.ru/
- * Version:     1.3.0
+ * Version:     1.3.1
  */
 
 define( 'I18N_PATH', wp_normalize_path( plugin_dir_path( __FILE__ ) ) );
