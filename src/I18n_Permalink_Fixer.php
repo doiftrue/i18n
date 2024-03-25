@@ -41,7 +41,7 @@ class I18n_Permalink_Fixer {
 		){
 			// TODO add lang pleceholder and then replace it
 			// Simplify fix_home_url() to add prefix only if $path parameter is empty - all
-			// known urls in this case will be processed separatelly - prefix will be added separatelly for oll known urls
+			// known urls in this case will be processed separatelly - prefix will be added separatelly for all known urls
 			// add_filter( $filter_name, [ __CLASS__, 'add_lang_tag_prefix_to_url' ], 49, 3 );
 			add_filter( $filter_name, [ __CLASS__, 'replace_permalink_lang_placeholder' ], 50, 3 );
 		}
@@ -99,9 +99,12 @@ class I18n_Permalink_Fixer {
 		}
 
 		// TODO make better logic to not use $trace and foreach
-		// Don't add LANG prefix if home_url() called from one of functions:
-		static $skip_functions = [ 'get_rest_url', 'rewrite_rules' ];
-		$trace = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS, 6 ); // fast - 0.025sec for 50k iterations
+		// Don't add LANG prefix if home_url() called from one of the functions:
+		static $skip_functions = [];
+		if( ! $skip_functions ){
+			$skip_functions = apply_filters( 'i18n__skip_fix_home_url_functions', [ 'get_rest_url', 'rewrite_rules' ] );
+		}
+		$trace = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS ); // fast - 0.025sec for 50k iterations
 		foreach( $trace as $item ){
 			if( in_array( ( $item['function'] ?? '' ), $skip_functions, true ) ){
 				return true;
